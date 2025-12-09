@@ -187,8 +187,9 @@ async def async_handle_webhook(
         
         # Find the coordinator for this webhook
         entry_id = None
-        for entry_id_candidate, entry_data in hass.data.get(DOMAIN, {}).items():
-            if hasattr(entry_data, "entry") and entry_data.entry.data.get(OURA_CONF_WEBHOOK_ID) == webhook_id:
+        for entry_id_candidate, coordinator in hass.data.get(DOMAIN, {}).items():
+            # Check if this coordinator has the matching webhook_id
+            if hasattr(coordinator, "webhook_id") and coordinator.webhook_id == webhook_id:
                 entry_id = entry_id_candidate
                 break
         
