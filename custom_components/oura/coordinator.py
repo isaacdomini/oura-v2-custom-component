@@ -36,6 +36,9 @@ class OuraDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self.api_client = api_client
         self.entry = entry
         self.historical_data_loaded = False
+        # Webhook-related attributes (will be set if webhooks are enabled)
+        self.webhook_manager = None
+        self.webhook_id = None
 
     async def _async_update_data(self) -> dict[str, Any]:
         """Update data via API."""

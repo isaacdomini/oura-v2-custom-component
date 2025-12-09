@@ -11,6 +11,8 @@ ATTRIBUTION: Final = "Data provided by Oura Ring"
 CONF_UPDATE_INTERVAL: Final = "update_interval"
 CONF_HISTORICAL_MONTHS: Final = "historical_months"
 CONF_HISTORICAL_DATA_IMPORTED: Final = "historical_data_imported"
+CONF_USE_WEBHOOKS: Final = "use_webhooks"
+CONF_WEBHOOK_ID: Final = "webhook_id"
 
 # OAuth2 Constants
 OAUTH2_AUTHORIZE: Final = "https://cloud.ouraring.com/oauth/authorize"
@@ -34,6 +36,10 @@ API_BASE_URL: Final = "https://api.ouraring.com/v2/usercollection"
 DEFAULT_UPDATE_INTERVAL: Final = 5  # minutes
 MIN_UPDATE_INTERVAL: Final = 1  # minimum 1 minute to respect API rate limits
 MAX_UPDATE_INTERVAL: Final = 60  # maximum 1 hour
+
+# Webhook configuration
+DEFAULT_USE_WEBHOOKS: Final = False  # Default to polling for backward compatibility
+WEBHOOK_API_URL: Final = "https://api.ouraring.com/v2/webhook/subscription"
 
 # Historical data loading
 DEFAULT_HISTORICAL_MONTHS: Final = 3  # Fetch 3 months by default (90 days)

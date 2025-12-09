@@ -28,12 +28,14 @@
         "title": "Oura Ring Options",
         "description": "Configure how often Oura Ring data is fetched and how many months of historical data to load on first setup.",
         "data": {
+          "use_webhooks": "Use webhooks for real-time updates",
           "update_interval": "Update interval (minutes)",
           "historical_months": "Historical months to load (1-48, only applies on first setup)",
           "historical_data_imported": "Historical data already imported"
         },
         "data_description": {
-          "update_interval": "How often to fetch new data from Oura API (1-60 minutes)",
+          "use_webhooks": "Enable webhooks for instant updates when Oura data changes (recommended). Disable to use polling mode.",
+          "update_interval": "How often to fetch new data from Oura API (1-60 minutes). Used as fallback when webhooks are enabled, or primary method when webhooks are disabled.",
           "historical_months": "Number of months of historical data to import on first setup or when re-importing (1-48 months, up to 4 years)",
           "historical_data_imported": "Toggle OFF to re-import historical data on next restart (will fetch the configured number of months). WARNING: This will trigger a full historical data import!"
         }

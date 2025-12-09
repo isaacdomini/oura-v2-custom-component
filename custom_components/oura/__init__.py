@@ -14,10 +14,18 @@ from .const import (
     CONF_UPDATE_INTERVAL,
     CONF_HISTORICAL_MONTHS,
     CONF_HISTORICAL_DATA_IMPORTED,
+    CONF_USE_WEBHOOKS,
+    CONF_WEBHOOK_ID,
     DEFAULT_UPDATE_INTERVAL,
     DEFAULT_HISTORICAL_MONTHS,
+    DEFAULT_USE_WEBHOOKS,
 )
 from .coordinator import OuraDataUpdateCoordinator
+from .webhook import (
+    OuraWebhookManager,
+    async_handle_webhook,
+    generate_webhook_id,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -48,6 +56,50 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Get update interval from options, or use default
     update_interval = entry.options.get(CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL)
     coordinator = OuraDataUpdateCoordinator(hass, api_client, entry, update_interval)
+
+    # Check if webhooks are enabled
+    use_webhooks = entry.options.get(CONF_USE_WEBHOOKS, DEFAULT_USE_WEBHOOKS)
+    
+    if use_webhooks:
+        # Set up webhook integration
+        from homeassistant.components import webhook
+        
+        # Get or generate webhook ID
+        webhook_id = entry.data.get(CONF_WEBHOOK_ID)
+        if not webhook_id:
+            webhook_id = generate_webhook_id(entry.entry_id)
+            # Store webhook ID in config entry data
+            new_data = {**entry.data, CONF_WEBHOOK_ID: webhook_id}
+            hass.config_entries.async_update_entry(entry, data=new_data)
+            _LOGGER.info("Generated new webhook ID: %s", webhook_id)
+        
+        # Register webhook handler with Home Assistant
+        webhook.async_register(
+            hass,
+            DOMAIN,
+            "Oura Ring",
+            webhook_id,
+            async_handle_webhook,
+        )
+        _LOGGER.info("Registered webhook handler for Oura Ring")
+        
+        # Register webhook with Oura API
+        webhook_manager = OuraWebhookManager(hass, session, entry.entry_id)
+        success = await webhook_manager.async_register_webhook(webhook_id)
+        
+        if success:
+            _LOGGER.info("Webhook mode enabled - data will update in real-time")
+        else:
+            _LOGGER.warning(
+                "Failed to register webhook with Oura API. "
+                "Falling back to polling mode."
+            )
+        
+        # Store webhook manager for cleanup
+        coordinator.webhook_manager = webhook_manager
+        coordinator.webhook_id = webhook_id
+    else:
+        _LOGGER.info("Polling mode enabled - data will update every %d minutes", update_interval)
 
     # Check if historical data has been imported (persistent flag in config entry options)
     # This flag survives restarts and prevents re-importing on every HA restart
@@ -97,6 +149,23 @@ async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
+    # Clean up webhook if it was registered
+    coordinator = hass.data[DOMAIN].get(entry.entry_id)
+    if coordinator and hasattr(coordinator, "webhook_manager") and hasattr(coordinator, "webhook_id"):
+        from homeassistant.components import webhook
+        
+        # Unregister from Oura API
+        webhook_manager = coordinator.webhook_manager
+        webhook_id = coordinator.webhook_id
+        
+        if webhook_manager and webhook_id:
+            _LOGGER.info("Unregistering webhook from Oura API")
+            await webhook_manager.async_unregister_webhook(webhook_id)
+            
+            # Unregister from Home Assistant
+            webhook.async_unregister(hass, webhook_id)
+            _LOGGER.info("Webhook unregistered from Home Assistant")
+    
     if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
         hass.data[DOMAIN].pop(entry.entry_id)
 
