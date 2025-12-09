@@ -105,7 +105,7 @@ class OuraWebhookManager:
                         "Could not register webhook for %s (HTTP %s): %s",
                         data_type,
                         err.status,
-                        err.message,
+                        str(err),
                     )
             
             if success_count > 0:
@@ -119,11 +119,11 @@ class OuraWebhookManager:
             _LOGGER.error(
                 "Failed to register webhook (HTTP %s): %s",
                 err.status,
-                err.message,
+                str(err),
             )
             return False
         except Exception as err:
-            _LOGGER.error("Unexpected error registering webhook: %s", err)
+            _LOGGER.error("Unexpected error registering webhook: %s", str(err))
             return False
 
     async def async_unregister_webhook(self, webhook_id: str) -> bool:
@@ -186,11 +186,11 @@ class OuraWebhookManager:
             _LOGGER.warning(
                 "Failed to unregister webhook (HTTP %s): %s",
                 err.status,
-                err.message,
+                str(err),
             )
             return False
         except Exception as err:
-            _LOGGER.warning("Unexpected error unregistering webhook: %s", err)
+            _LOGGER.warning("Unexpected error unregistering webhook: %s", str(err))
             return False
 
 
