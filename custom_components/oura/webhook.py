@@ -70,23 +70,51 @@ class OuraWebhookManager:
             }
             
             # Subscribe to all data types that Oura supports
-            data = {
-                "callback_url": webhook_url,
-                "event_type": "create",
-                "data_type": "sleep",  # Start with sleep, can add more types
-            }
+            # According to Oura API docs, we need to register separately for each data type
+            data_types = [
+                "daily_sleep",
+                "daily_readiness",
+                "daily_activity",
+                "sleep",  # Detailed sleep data
+                "workout",
+                "tag",
+            ]
             
             _LOGGER.info("Registering Oura webhook: %s", webhook_url)
             
-            async with self.client_session.post(
-                WEBHOOK_API_URL,
-                headers=headers,
-                json=data,
-            ) as response:
-                response.raise_for_status()
-                result = await response.json()
-                _LOGGER.info("Webhook registered successfully: %s", result)
+            success_count = 0
+            for data_type in data_types:
+                data = {
+                    "callback_url": webhook_url,
+                    "event_type": "create",
+                    "data_type": data_type,
+                }
+                
+                try:
+                    async with self.client_session.post(
+                        WEBHOOK_API_URL,
+                        headers=headers,
+                        json=data,
+                    ) as response:
+                        response.raise_for_status()
+                        result = await response.json()
+                        _LOGGER.debug("Registered webhook for %s: %s", data_type, result.get("id"))
+                        success_count += 1
+                except ClientResponseError as err:
+                    # Log but continue - some data types might not be available
+                    _LOGGER.debug(
+                        "Could not register webhook for %s (HTTP %s): %s",
+                        data_type,
+                        err.status,
+                        err.message,
+                    )
+            
+            if success_count > 0:
+                _LOGGER.info("Webhook registered successfully for %d data types", success_count)
                 return True
+            else:
+                _LOGGER.error("Failed to register webhook for any data types")
+                return False
                 
         except ClientResponseError as err:
             _LOGGER.error(
