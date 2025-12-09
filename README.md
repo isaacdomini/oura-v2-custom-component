@@ -10,6 +10,7 @@ A modern Home Assistant custom integration for Oura Ring using the v2 API with O
 ## Features
 
 - **OAuth2 Authentication**: Secure authentication using Home Assistant's application credentials
+- **Webhook Support**: Real-time push notifications when new data is available (optional, enabled by default)
 - **Comprehensive Data**: 46 sensors covering all Oura Ring metrics including sleep, readiness, activity, stress, resilience, and more
 - **HA 2025.11 Compliant**: Modern entity naming, translation keys, entity categories, and proper state classes
 - **Historical Data Loading**: Automatically loads 3 months of historical data on first setup (configurable 1-48 months, up to 4 years)
@@ -186,19 +187,39 @@ automation:
 
 ## Data Update Frequency
 
-The integration polls the Oura API with a configurable update interval (default: 5 minutes). You can configure this interval:
+The integration supports two modes for receiving data from Oura:
+
+### Webhook Mode (Recommended) 🔔
+
+When enabled, the integration receives real-time push notifications from Oura whenever new data becomes available. This provides:
+
+✅ **Instant updates** - Data appears in Home Assistant as soon as Oura processes it  
+✅ **Reduced API calls** - No polling needed, only webhook-triggered updates  
+✅ **Better responsiveness** - Immediate sensor updates when your ring syncs  
+✅ **Lower bandwidth** - Only fetches data when changes occur  
+
+The integration automatically registers a secure webhook endpoint with Oura and manages the subscription lifecycle.
+
+### Polling Mode 📊
+
+Traditional polling mode fetches data at a configurable interval (default: 5 minutes). This mode:
+
+- Works reliably for all users
+- Fetches data on a fixed schedule
+- Provides predictable update timing
+- Falls back automatically if webhooks fail
+
+### Configuration
 
 1. Go to **Settings** → **Devices & Services**
 2. Find "Oura Ring" and click **CONFIGURE**
-3. Set your desired update interval (1-60 minutes)
-4. Set historical data months (1-48 months, default: 3 months) - **only loaded on first setup**
-5. **Historical Data Imported**: Keep checked to prevent re-importing history. Uncheck to force re-import on next restart.
-6. Click **SUBMIT**
+3. **Use webhooks for real-time updates**: Enable for instant updates (recommended), disable for polling mode
+4. Set your desired update interval (1-60 minutes) - used as fallback with webhooks or primary method in polling mode
+5. Set historical data months (1-48 months, default: 3 months) - **only loaded on first setup**
+6. **Historical Data Imported**: Keep checked to prevent re-importing history. Uncheck to force re-import on next restart.
+7. Click **SUBMIT**
 
-The integration will automatically reload with the new interval. The default 5-minute interval is optimized to:
-- Provide timely updates
-- Minimize API calls
-- Respect Oura's rate limits
+The integration will automatically reload with the new settings. When using webhooks, the polling interval serves as a fallback to ensure data updates even if webhook delivery is delayed.
 
 ### Historical Data Loading
 
@@ -674,6 +695,20 @@ cards:
 
 ## Troubleshooting
 
+### Webhook Issues
+
+If webhooks are not working properly:
+
+1. **Check webhook registration**: Look for "Webhook registered successfully" in the Home Assistant logs
+2. **Verify Home Assistant is accessible**: Webhooks require your Home Assistant instance to be accessible from the internet
+   - If you're using Home Assistant Cloud (Nabu Casa), webhooks should work automatically
+   - For self-hosted setups, ensure your instance has a public URL and proper port forwarding
+3. **Fallback to polling**: If webhooks fail to register, the integration automatically falls back to polling mode
+4. **Check Oura API logs**: Visit the [Oura Developer Portal](https://developer.ouraring.com/applications) to check webhook delivery status
+5. **Re-register webhook**: Disable and re-enable webhooks in the integration options to trigger re-registration
+
+**Note**: If your Home Assistant instance is not accessible from the internet, webhooks cannot work. In this case, use polling mode instead.
+
 ### Authentication Issues
 
 If you encounter authentication issues:
@@ -689,7 +724,7 @@ If some sensors are not appearing:
 
 1. Ensure your Oura Ring is synced with the Oura app
 2. Check that you have recent data in the Oura app
-3. Wait for the next update cycle (default: 5 minutes)
+3. Wait for the next update cycle (default: 5 minutes) or webhook trigger
 4. Check Home Assistant logs for errors
 
 ### Unavailable Sensors

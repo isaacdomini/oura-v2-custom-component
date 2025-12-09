@@ -18,8 +18,10 @@ from .const import (
     CONF_UPDATE_INTERVAL,
     CONF_HISTORICAL_MONTHS,
     CONF_HISTORICAL_DATA_IMPORTED,
+    CONF_USE_WEBHOOKS,
     DEFAULT_UPDATE_INTERVAL,
     DEFAULT_HISTORICAL_MONTHS,
+    DEFAULT_USE_WEBHOOKS,
     MIN_UPDATE_INTERVAL,
     MAX_UPDATE_INTERVAL,
     MIN_HISTORICAL_MONTHS,
@@ -141,6 +143,12 @@ class OuraOptionsFlowHandler(config_entries.OptionsFlow):
             step_id="init",
             data_schema=vol.Schema(
                 {
+                    vol.Optional(
+                        CONF_USE_WEBHOOKS,
+                        default=self.config_entry.options.get(
+                            CONF_USE_WEBHOOKS, DEFAULT_USE_WEBHOOKS
+                        ),
+                    ): bool,
                     vol.Optional(
                         CONF_UPDATE_INTERVAL,
                         default=self.config_entry.options.get(

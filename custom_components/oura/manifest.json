@@ -3,10 +3,10 @@
   "name": "Oura Ring",
   "codeowners": ["@louispires"],
   "config_flow": true,
-  "dependencies": ["application_credentials", "recorder"],
+  "dependencies": ["application_credentials", "recorder", "webhook"],
   "documentation": "https://github.com/louispires/oura-v2-custom-component",
   "integration_type": "service",
-  "iot_class": "cloud_polling",
+  "iot_class": "cloud_push",
   "issue_tracker": "https://github.com/louispires/oura-v2-custom-component/issues",
   "requirements": [],
   "version": "2.5.0"
