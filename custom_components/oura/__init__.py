@@ -151,20 +151,16 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
     # Clean up webhook if it was registered
     coordinator = hass.data[DOMAIN].get(entry.entry_id)
-    if coordinator and hasattr(coordinator, "webhook_manager") and hasattr(coordinator, "webhook_id"):
+    if coordinator and coordinator.webhook_manager and coordinator.webhook_id:
         from homeassistant.components import webhook
         
         # Unregister from Oura API
-        webhook_manager = coordinator.webhook_manager
-        webhook_id = coordinator.webhook_id
+        _LOGGER.info("Unregistering webhook from Oura API")
+        await coordinator.webhook_manager.async_unregister_webhook(coordinator.webhook_id)
         
-        if webhook_manager and webhook_id:
-            _LOGGER.info("Unregistering webhook from Oura API")
-            await webhook_manager.async_unregister_webhook(webhook_id)
-            
-            # Unregister from Home Assistant
-            webhook.async_unregister(hass, webhook_id)
-            _LOGGER.info("Webhook unregistered from Home Assistant")
+        # Unregister from Home Assistant
+        webhook.async_unregister(hass, coordinator.webhook_id)
+        _LOGGER.info("Webhook unregistered from Home Assistant")
     
     if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
         hass.data[DOMAIN].pop(entry.entry_id)

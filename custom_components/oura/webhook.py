@@ -10,9 +10,8 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.config_entry_oauth2_flow import OAuth2Session
 from homeassistant.components import webhook
-from homeassistant.const import CONF_WEBHOOK_ID
 
-from .const import DOMAIN, WEBHOOK_API_URL, CONF_WEBHOOK_ID as OURA_CONF_WEBHOOK_ID
+from .const import DOMAIN, WEBHOOK_API_URL
 
 _LOGGER = logging.getLogger(__name__)
 
